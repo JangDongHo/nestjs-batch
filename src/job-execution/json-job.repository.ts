@@ -1,13 +1,21 @@
 import { JobRepository } from './job.repository.interface';
 import SimpleJsonDB from 'simple-json-db';
 import { JobExecution } from './job-execution';
+import { StepExecution } from './step-execution';
 
 export class JsonJobRepository implements JobRepository {
   private readonly db = new SimpleJsonDB('./job-execution.json');
 
-  async save(execution: JobExecution): Promise<JobExecution> {
+  async saveJobExecution(execution: JobExecution): Promise<JobExecution> {
     const key = execution.getId();
-    this.db.set(key, execution);
+    this.db.set(`jobExecutions:${key}`, execution);
+
+    return execution;
+  }
+
+  async saveStepExecution(execution: StepExecution): Promise<StepExecution> {
+    const key = execution.getId();
+    this.db.set(`stepExecutions:${key}`, execution);
 
     return execution;
   }

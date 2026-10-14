@@ -1,5 +1,7 @@
 import { JobExecution } from './job-execution';
+import { StepExecution } from './step-execution';
 
 export interface JobRepository {
-  save(execution: JobExecution): Promise<JobExecution>;
+  saveJobExecution(execution: JobExecution): Promise<JobExecution>;
+  saveStepExecution(execution: StepExecution): Promise<StepExecution>;
 }

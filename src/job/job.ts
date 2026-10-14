@@ -3,6 +3,7 @@ import { Step } from './step.interface';
 import { JobRepository } from '../job-execution/job.repository.interface';
 import { JsonJobRepository } from '../job-execution/json-job.repository';
 import { JobExecution } from '../job-execution/job-execution';
+import { StepExecution } from '../job-execution/step-execution';
 
 export class Job {
   constructor(
@@ -13,26 +14,41 @@ export class Job {
   ) {}
 
   async execute(): Promise<void> {
-    const execution = new JobExecution({
+    const jobExecution = new JobExecution({
       jobName: this.name,
     });
 
-    await this.jobRepository.save(execution);
+    await this.jobRepository.saveJobExecution(jobExecution);
 
     for (const step of this.steps) {
+      const stepExecution = new StepExecution({
+        stepName: step.name,
+        jobId: jobExecution.getId(),
+      });
+
+      await this.jobRepository.saveStepExecution(stepExecution);
+
       try {
         await step.execute();
         this.printLog(step.name);
+
+        stepExecution.complete();
+        await this.jobRepository.saveStepExecution(stepExecution);
       } catch (error) {
         this.printErrorLog(step.name, error);
-        execution.fail(String(error));
-        await this.jobRepository.save(execution);
+
+        jobExecution.fail(String(error));
+        await this.jobRepository.saveJobExecution(jobExecution);
+
+        stepExecution.fail(String(error));
+        await this.jobRepository.saveStepExecution(stepExecution);
+
         throw error;
       }
     }
 
-    execution.complete();
-    await this.jobRepository.save(execution);
+    jobExecution.complete();
+    await this.jobRepository.saveJobExecution(jobExecution);
   }
 
   private printLog(stepName: string): void {
