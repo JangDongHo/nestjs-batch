@@ -1,98 +1,174 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 미니 과제: Nest Batch Framework 구현
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 프로젝트 개요
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+NestJS 환경에서 배치 작업을 정의하고, 실행하고, 실패를 관리할 수 있는 작은 배치 프레임워크를 구현한다.
 
-## Description
+### 기술 스택
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- NestJS
+- TypeScript
+- PostgreSQL
+- Jest
 
-## Project setup
+### 핵심 목표
 
-```bash
-$ pnpm install
-```
+- 배치 작업과 실행 단계를 구조화한다.
+- 실행 상태와 이력을 관리한다.
+- 실패 및 재시도 정책을 구현한다.
+- 중복 실행과 대량 데이터 처리 문제를 다룬다.
+- 실제 데이터 수집 작업에 적용한다.
 
-## Compile and run the project
+---
 
-```bash
-# development
-$ pnpm run start
+## Step 1. 배치 작업 실행하기
 
-# watch mode
-$ pnpm run start:dev
+**목표: 가장 작은 실행 단위 만들기**
 
-# production mode
-$ pnpm run start:prod
-```
+### 요구사항
 
-## Run tests
+1. 개발자가 자신만의 배치 작업을 정의할 수 있어야 한다.
+2. 배치 작업은 여러 개의 작업 단계로 구성될 수 있어야 한다.
+3. 하나의 배치 작업을 실행하면 정의된 단계가 순서대로 실행되어야 한다.
+4. 앞 단계가 완료되기 전에 다음 단계가 실행되어서는 안 된다.
+5. 배치 작업의 실행 결과를 확인할 수 있어야 한다.
 
-```bash
-# unit tests
-$ pnpm run test
+### 완료 조건
 
-# e2e tests
-$ pnpm run test:e2e
+- 최소 2개의 단계로 구성된 배치 작업을 실행한다.
+- 실행 순서가 예상대로 지켜지는지 테스트한다.
+- 실행 중 오류가 발생했을 때 현재 동작을 확인한다.
 
-# test coverage
-$ pnpm run test:cov
-```
+---
 
-## Deployment
+## Step 2. 실행 상태와 이력 관리하기
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+**목표: 실행 결과를 기록으로 남기기**
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 요구사항
 
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
+1. 배치 작업의 실행이 시작되면 새로운 실행 이력이 생성되어야 한다.
+2. 실행 이력에는 작업명, 실행 시작 시각, 종료 시각, 실행 결과가 포함되어야 한다.
+3. 각 단계의 실행 결과도 확인할 수 있어야 한다.
+4. 배치 작업이 실패하더라도 실패했다는 사실과 원인을 확인할 수 있어야 한다.
+5. 애플리케이션을 재시작한 뒤에도 과거 실행 이력을 조회할 수 있어야 한다.
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 완료 조건
 
-## Resources
+- 정상 실행과 실패 실행의 이력을 각각 조회할 수 있다.
+- 어떤 단계에서 실패했는지 확인할 수 있다.
+- 실행 중간에 프로세스가 종료되는 상황을 가정하고, 이력에 어떤 문제가 생기는지 확인한다.
 
-Check out a few resources that may come in handy when working with NestJS:
+---
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Step 3. 실패와 재시도 처리하기
 
-## Support
+**목표: 실패를 예상하고 제어하기**
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### 요구사항
 
-## Stay in touch
+1. 특정 단계에서 오류가 발생하면 이후 단계의 실행 정책이 명확해야 한다.
+2. 일시적인 외부 API 오류에 대응할 수 있어야 한다.
+3. 재시도 횟수에는 제한이 있어야 한다.
+4. 재시도 횟수와 최종 실패 원인을 확인할 수 있어야 한다.
+5. 재시도가 모두 실패했을 때 배치 작업의 최종 결과가 일관되게 기록되어야 한다.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### 완료 조건
 
-## License
+- 한 번 실패한 뒤 성공하는 작업을 검증한다.
+- 모든 재시도가 실패하는 작업을 검증한다.
+- 재시도 대상 오류와 즉시 실패해야 하는 오류를 구분할 기준을 정한다.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+---
+
+## Step 4. 실패한 배치 다시 실행하기
+
+**목표: 재실행의 의미 정의하기**
+
+### 요구사항
+
+1. 실패한 배치 작업을 다시 실행할 수 있어야 한다.
+2. 다시 실행한 기록은 기존 실행 이력과 구분할 수 있어야 한다.
+3. 재실행 중 일부 데이터가 이미 저장되어 있더라도 데이터 정합성이 유지되어야 한다.
+4. 개발자가 작업을 다시 실행할 때 필요한 정보를 확인할 수 있어야 한다.
+
+### 완료 조건
+
+- 실패한 작업을 다시 실행해 정상 완료시킨다.
+- 재실행 과정에서 동일한 데이터가 중복 저장되지 않는지 확인한다.
+- 전체 작업을 처음부터 다시 실행하는 방식의 한계를 정리한다.
+
+---
+
+## Step 5. 중복 실행 방지하기
+
+**목표: 동시에 실행되는 상황 다루기**
+
+### 요구사항
+
+1. 동일한 배치 작업이 동시에 실행될 수 있는 상황을 고려한다.
+2. 스케줄 실행과 수동 실행이 겹치는 상황을 고려한다.
+3. 여러 애플리케이션 인스턴스가 실행 중인 상황도 고려한다.
+4. 실행을 거부하거나 대기시키는 경우 그 결과를 명확하게 확인할 수 있어야 한다.
+
+### 완료 조건
+
+- 동일한 배치 작업을 거의 동시에 두 번 실행하는 테스트를 작성한다.
+- 단일 프로세스에서의 중복 실행 방지와 여러 프로세스에서의 중복 실행 방지가 어떻게 다른지 설명할 수 있다.
+
+---
+
+## Step 6. 대량 데이터 처리하기
+
+**목표: 처리량과 메모리 사용 고려하기**
+
+### 요구사항
+
+1. 대량의 데이터를 한 번에 처리하지 않고 나누어 처리할 수 있어야 한다.
+2. 데이터 조회, 처리, 저장 과정에서 발생하는 오류를 관리할 수 있어야 한다.
+3. 일부 데이터 처리에 실패했을 때 데이터 정합성을 고려해야 한다.
+4. 처리 단위를 변경했을 때 성능과 메모리 사용량이 어떻게 달라지는지 확인할 수 있어야 한다.
+
+### 완료 조건
+
+- 최소 수만 건의 테스트 데이터를 처리한다.
+- 처리 단위에 따른 실행 시간과 메모리 사용량을 비교한다.
+- 일부 데이터가 실패했을 때 어디까지 성공한 것으로 볼지 정책을 정의한다.
+
+---
+
+## Step 7. 실제 배치로 검증하기
+
+**목표: 프레임워크를 실제 문제에 적용하기**
+
+### 요구사항
+
+1. 외부 데이터 소스에서 데이터를 가져온다.
+2. 데이터를 검증하고 데이터베이스에 저장한다.
+3. 정해진 시간에 자동 실행할 수 있어야 한다.
+4. 실패한 실행을 조회하고 다시 실행할 수 있어야 한다.
+5. 실행 결과와 오류를 운영자가 확인할 수 있어야 한다.
+
+### 완료 조건
+
+- 최소 하루 이상 운영하는 상황을 가정해 실행 시나리오를 검증한다.
+- 외부 API 장애, DB 오류, 프로세스 종료 상황을 테스트한다.
+- 직접 구현한 프레임워크의 한계와 개선점을 문서로 정리한다.
+
+---
+
+## 진행 규칙
+
+1. **구현 방법은 스스로 결정한다.** 클래스 구조, DB 스키마, 라이브러리 선택은 자유다.
+2. **완료 조건을 테스트로 증명한다.** 코드가 실행되는 것만으로 완료 처리하지 않는다.
+3. **필요하면 이전 설계를 수정한다.** 구현 과정에서 발견한 문제를 반영한다.
+4. **Spring Batch의 모든 기능을 구현하려 하지 않는다.** 학습 목적에 맞는 범위를 판단한다.
+5. 각 Step을 완료한 뒤 코드와 설계 과정에서 고민한 내용을 리뷰한다.
+
+## 최종 산출물
+
+- NestJS 기반 배치 프레임워크
+- 주요 기능에 대한 자동화 테스트
+- 실제 데이터 수집 배치 작업
+- 설계 결정 및 구현 과정에서 배운 점을 정리한 문서
+- Spring Batch와 비교한 구현 범위 및 한계 정리
