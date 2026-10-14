@@ -1,26 +1,14 @@
-import { Step } from './step.interface';
-import { Job } from './job';
-
-const step1: Step = {
-  name: 'Step 1',
-  async execute() {
-    throw new Error('error!!');
-  },
-};
-
-const step2: Step = {
-  name: 'Step 2',
-  async execute() {
-    console.log('Executing Step 2');
-  },
-};
+import { Logger } from '@nestjs/common';
+import { TestJob } from './jobs/test.job';
 
 async function bootstrap() {
+  const logger = new Logger(bootstrap.name);
+  const job = new TestJob().create();
+
   try {
-    const job = new Job('Test Job', [step1, step2]);
     await job.execute();
-  } catch (err) {
-    console.log(err);
+  } catch (error) {
+    logger.error(`${job.name} 실패: ${error}}`);
   }
 }
 bootstrap();
