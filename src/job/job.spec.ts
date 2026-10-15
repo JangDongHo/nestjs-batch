@@ -1,5 +1,11 @@
+import { JobRepository } from '../job-execution/job.repository.interface';
 import { Job } from './job';
 import { Step } from './step.interface';
+
+const jobRepository: JobRepository = {
+  saveJobExecution: jest.fn(),
+  saveStepExecution: jest.fn(),
+};
 
 describe('Job', () => {
   it('Step을 등록한 순서대로 실행한다.', async () => {
@@ -19,7 +25,7 @@ describe('Job', () => {
       },
     };
 
-    const job = new Job('Test Job', [step1, step2]);
+    const job = new Job('Test Job', [step1, step2], jobRepository);
 
     await job.execute();
 
@@ -46,7 +52,7 @@ describe('Job', () => {
       },
     };
 
-    const job = new Job('Test Job', [step1, step2]);
+    const job = new Job('Test Job', [step1, step2], jobRepository);
 
     await job.execute();
 
@@ -68,7 +74,7 @@ describe('Job', () => {
       execute: step2Execute,
     };
 
-    const job = new Job('Test Job', [step1, step2]);
+    const job = new Job('Test Job', [step1, step2], jobRepository);
 
     expect(job.execute()).rejects.toThrow('Error!!');
 
