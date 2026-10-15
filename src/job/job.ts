@@ -23,7 +23,7 @@ export class Job {
     for (const step of this.steps) {
       const stepExecution = new StepExecution({
         stepName: step.name,
-        jobId: jobExecution.getId(),
+        jobExecutionId: jobExecution.getId(),
       });
 
       await this.jobRepository.saveStepExecution(stepExecution);

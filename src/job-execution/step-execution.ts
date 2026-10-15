@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 
 interface StepExecutionProps {
   id?: string;
-  jobId: string;
+  jobExecutionId: string;
   stepName: string;
   status?: 'RUNNING' | 'COMPLETED' | 'FAILED';
   startTime?: Date;
@@ -12,7 +12,7 @@ interface StepExecutionProps {
 
 export class StepExecution {
   private readonly id: string;
-  private readonly jobId: string;
+  private readonly jobExecutionId: string;
   private readonly stepName: string;
   private status: 'RUNNING' | 'COMPLETED' | 'FAILED';
   private readonly startTime: Date;
@@ -21,7 +21,7 @@ export class StepExecution {
 
   constructor(props: StepExecutionProps) {
     this.id = props.id ?? randomUUID();
-    this.jobId = props.jobId;
+    this.jobExecutionId = props.jobExecutionId;
     this.stepName = props.stepName;
     this.status = props.status ?? 'RUNNING';
     this.startTime = props.startTime ?? new Date();
