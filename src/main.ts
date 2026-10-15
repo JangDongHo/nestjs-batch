@@ -8,7 +8,8 @@ async function bootstrap() {
   try {
     await job.execute();
   } catch (error) {
-    logger.error(`${job.name} 실패: ${error}}`);
+    logger.error(`${job.name} 실패: ${error}`);
+    process.exitCode = 1;
   }
 }
 bootstrap();
