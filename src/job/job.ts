@@ -28,23 +28,31 @@ export class Job {
 
       await this.jobRepository.saveStepExecution(stepExecution);
 
+      let failure: unknown;
+      let failed = false;
+
       try {
         await step.execute();
-        this.printLog(step.name);
-
-        stepExecution.complete();
-        await this.jobRepository.saveStepExecution(stepExecution);
       } catch (error) {
-        this.printErrorLog(step.name, error);
+        failed = true;
+        failure = error;
+      }
 
-        jobExecution.fail(String(error));
+      if (failed) {
+        this.printErrorLog(step.name, failure);
+
+        stepExecution.fail(String(failure));
+        await this.jobRepository.saveStepExecution(stepExecution);
+
+        jobExecution.fail(String(failure));
         await this.jobRepository.saveJobExecution(jobExecution);
 
-        stepExecution.fail(String(error));
-        await this.jobRepository.saveStepExecution(stepExecution);
-
-        throw error;
+        throw failure;
       }
+
+      this.printLog(step.name);
+      stepExecution.complete();
+      await this.jobRepository.saveStepExecution(stepExecution);
     }
 
     jobExecution.complete();
