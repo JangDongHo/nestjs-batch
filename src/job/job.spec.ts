@@ -7,7 +7,7 @@ const jobRepository: JobRepository = {
   saveStepExecution: jest.fn(),
 };
 
-describe('Job', () => {
+describe('Step 1. 배치 작업 실행하기', () => {
   it('Step을 등록한 순서대로 실행한다.', async () => {
     const executionOrder: string[] = [];
 
@@ -80,4 +80,12 @@ describe('Job', () => {
 
     expect(step2Execute).not.toHaveBeenCalled();
   });
+});
+
+describe('Step 2. 실행 상태와 이력 관리하기', () => {
+  it.todo('정상 실행과 실패 실행의 이력을 각각 조회할 수 있다.');
+  it.todo('어떤 단계에서 실패했는지 확인할 수 있다.');
+  it.todo(
+    '실행 중간에 프로세스가 종료되는 상황을 가정하고, 이력에 어떤 문제가 생기는지 확인한다.',
+  );
 });
