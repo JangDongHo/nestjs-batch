@@ -69,6 +69,4 @@ export class Job {
       this.logger.error(`${stepName} 실패: ${error}`);
     }
   }
-
-  private saveLog() {}
 }
