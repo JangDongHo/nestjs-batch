@@ -1,9 +1,11 @@
 import { randomUUID } from 'crypto';
 
+export type ExecutionStatus = 'RUNNING' | 'COMPLETED' | 'FAILED';
+
 interface JobExecutionProps {
   id?: string;
   jobName: string;
-  status?: 'RUNNING' | 'COMPLETED' | 'FAILED';
+  status?: ExecutionStatus;
   startTime?: Date;
   endTime?: Date | null;
   errorMessage?: string | null;
@@ -12,7 +14,7 @@ interface JobExecutionProps {
 export class JobExecution {
   private readonly id: string;
   private readonly jobName: string;
-  private status: 'RUNNING' | 'COMPLETED' | 'FAILED';
+  private status: ExecutionStatus;
   private readonly startTime: Date;
   private endTime: Date | null;
   private errorMessage: string | null;

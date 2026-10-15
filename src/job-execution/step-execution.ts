@@ -1,10 +1,11 @@
 import { randomUUID } from 'crypto';
+import { ExecutionStatus } from './job-execution';
 
 interface StepExecutionProps {
   id?: string;
   jobExecutionId: string;
   stepName: string;
-  status?: 'RUNNING' | 'COMPLETED' | 'FAILED';
+  status?: ExecutionStatus;
   startTime?: Date;
   endTime?: Date | null;
   errorMessage?: string | null;
@@ -14,7 +15,7 @@ export class StepExecution {
   private readonly id: string;
   private readonly jobExecutionId: string;
   private readonly stepName: string;
-  private status: 'RUNNING' | 'COMPLETED' | 'FAILED';
+  private status: ExecutionStatus;
   private readonly startTime: Date;
   private endTime: Date | null;
   private errorMessage: string | null;
