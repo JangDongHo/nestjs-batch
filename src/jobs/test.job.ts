@@ -1,3 +1,4 @@
+import { JsonJobRepository } from '../job-execution/json-job.repository';
 import { Job } from '../job/job';
 import { Step } from '../job/step.interface';
 
@@ -17,6 +18,8 @@ export class TestJob {
       },
     };
 
-    return new Job('TestJob', [step1, step2]);
+    const jobRepository = new JsonJobRepository();
+
+    return new Job('TestJob', [step1, step2], jobRepository);
   }
 }
