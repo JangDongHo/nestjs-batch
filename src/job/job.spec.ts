@@ -1,7 +1,11 @@
-import { ExecutionStatus, JobExecution } from '../job-execution/job-execution';
+import { ExecutionStatus } from '../job-execution/job-execution';
 import { JobRepository } from '../job-execution/job.repository.interface';
 import { Job } from './job';
 import { Step } from './step.interface';
+
+const expectedJobName = 'Test Job';
+const expectedStepName = 'Test Step';
+const expectedErrorMessage = 'error!!';
 
 const jobRepository: JobRepository = {
   saveJobExecution: jest.fn(),
@@ -32,11 +36,12 @@ describe('Step 실행 순서', () => {
 
     expect(executionOrder).toStrictEqual(['Step 1', 'Step 2']);
   });
+
   it('Step에서 오류가 발생하면 다음 Step을 진행하지 않는다.', async () => {
     const step1: Step = {
       name: 'Step 1',
       async execute() {
-        throw new Error('Error!!');
+        throw new Error();
       },
     };
 
@@ -49,75 +54,85 @@ describe('Step 실행 순서', () => {
 
     const job = new Job('Test Job', [step1, step2], jobRepository);
 
+    await job.execute();
+
     expect(step2Execute).not.toHaveBeenCalled();
   });
 });
 
-describe('Job 실행 상태', () => {
-  it('Step을 모두 실행하면 Job이 성공한다.', async () => {
-    const step1: Step = {
-      name: 'Step 1',
+describe('Job 실행 이력', () => {
+  it('Job의 성공 실행 이력을 확인할 수 있다.', async () => {
+    const step: Step = {
+      name: expectedStepName,
       async execute() {},
     };
 
-    const step2: Step = {
-      name: 'Step 2',
-      async execute() {},
-    };
+    const job = new Job(expectedJobName, [step], jobRepository);
 
-    const job = new Job('Test Job', [step1, step2], jobRepository);
     const jobExecution = await job.execute();
 
-    expect(jobExecution.status).toBe(ExecutionStatus.COMPLETED);
+    expect(jobExecution.jobName).toBe(expectedJobName);
+    expect(jobExecution.startTime).toEqual(expect.any(Date));
+    expect(jobExecution.endTime).toEqual(expect.any(Date));
+    expect(jobExecution.status).toEqual(ExecutionStatus.COMPLETED);
   });
 
-  it('Step 에서 오류가 발생하면 Job도 실패한다.', async () => {
+  it('Job의 실패 이력을 확인할 수 있다.', async () => {
     const step: Step = {
-      name: 'Step',
+      name: expectedStepName,
       async execute() {
-        throw new Error('Error!!');
+        throw new Error(expectedErrorMessage);
       },
     };
 
-    const job = new Job('Test Job', [step], jobRepository);
+    const job = new Job(expectedJobName, [step], jobRepository);
 
     const jobExecution = await job.execute();
 
+    expect(jobExecution.jobName).toBe(expectedJobName);
+    expect(jobExecution.startTime).toEqual(expect.any(Date));
+    expect(jobExecution.endTime).toEqual(expect.any(Date));
     expect(jobExecution.status).toBe(ExecutionStatus.FAILED);
+    expect(jobExecution.errorMessage).toContain(expectedErrorMessage);
   });
 });
 
 describe('Step 실행 상태', () => {
-  it('Step이 성공한다.', async () => {
+  it('Step의 성공 실행 이력을 확인할 수 있다.', async () => {
     const step: Step = {
-      name: 'Step',
+      name: expectedStepName,
       async execute() {},
     };
 
-    const job = new Job('Test Job', [step], jobRepository);
+    const job = new Job(expectedJobName, [step], jobRepository);
 
     const jobExecution = await job.execute();
     const stepExecution = jobExecution.stepExecutions[0];
 
-    expect(stepExecution.status).toBe(ExecutionStatus.COMPLETED);
+    expect(stepExecution.jobExecutionId).toBe(jobExecution.id);
+    expect(stepExecution.stepName).toBe(expectedStepName);
+    expect(stepExecution.startTime).toEqual(expect.any(Date));
+    expect(stepExecution.endTime).toEqual(expect.any(Date));
+    expect(stepExecution.status).toEqual(ExecutionStatus.COMPLETED);
   });
 
-  it('Step이 실패한다.', async () => {
-    const expectedStepName = 'Test Step';
-
+  it('Step의 실패 이력을 확인할 수 있다.', async () => {
     const step: Step = {
       name: expectedStepName,
       async execute() {
-        throw new Error('error!!');
+        throw new Error(expectedErrorMessage);
       },
     };
 
-    const job = new Job('Test Job', [step], jobRepository);
+    const job = new Job(expectedJobName, [step], jobRepository);
 
     const jobExecution = await job.execute();
     const stepExecution = jobExecution.stepExecutions[0];
 
-    expect(stepExecution.status).toBe(ExecutionStatus.FAILED);
     expect(stepExecution.stepName).toBe(expectedStepName);
+    expect(stepExecution.startTime).toEqual(expect.any(Date));
+    expect(stepExecution.endTime).toEqual(expect.any(Date));
+    expect(stepExecution.status).toBe(ExecutionStatus.FAILED);
+    expect(stepExecution.errorMessage).toContain(expectedErrorMessage);
   });
 });
