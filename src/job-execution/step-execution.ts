@@ -6,41 +6,29 @@ interface StepExecutionProps {
   jobExecutionId: string;
   stepName: string;
   status?: ExecutionStatus;
-  startTime?: Date;
-  endTime?: Date | null;
-  errorMessage?: string | null;
 }
 
 export class StepExecution {
-  private readonly id: string;
-  private readonly jobExecutionId: string;
-  private readonly stepName: string;
-  private status: ExecutionStatus;
-  private readonly startTime: Date;
-  private endTime: Date | null;
-  private errorMessage: string | null;
+  public readonly id: string = randomUUID();
+  public readonly jobExecutionId: string;
+  public readonly stepName: string;
+  public status: ExecutionStatus = ExecutionStatus.RUNNING;
+  public readonly startTime: Date = new Date();
+  public endTime: Date | null = null;
+  public errorMessage: string | null = null;
 
   constructor(props: StepExecutionProps) {
-    this.id = props.id ?? randomUUID();
     this.jobExecutionId = props.jobExecutionId;
     this.stepName = props.stepName;
-    this.status = props.status ?? 'RUNNING';
-    this.startTime = props.startTime ?? new Date();
-    this.endTime = props.endTime ?? null;
-    this.errorMessage = props.errorMessage ?? null;
-  }
-
-  getId(): string {
-    return this.id;
   }
 
   complete(): void {
-    this.status = 'COMPLETED';
+    this.status = ExecutionStatus.COMPLETED;
     this.endTime = new Date();
   }
 
   fail(errorMessage: string): void {
-    this.status = 'FAILED';
+    this.status = ExecutionStatus.FAILED;
     this.endTime = new Date();
     this.errorMessage = errorMessage;
   }

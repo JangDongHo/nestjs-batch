@@ -1,6 +1,14 @@
 import { randomUUID } from 'crypto';
+import { StepExecution } from './step-execution';
 
-export type ExecutionStatus = 'RUNNING' | 'COMPLETED' | 'FAILED';
+export const ExecutionStatus = {
+  RUNNING: 'RUNNING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+} as const;
+
+export type ExecutionStatus =
+  (typeof ExecutionStatus)[keyof typeof ExecutionStatus];
 
 interface JobExecutionProps {
   id?: string;
@@ -12,33 +20,29 @@ interface JobExecutionProps {
 }
 
 export class JobExecution {
-  private readonly id: string;
-  private readonly jobName: string;
-  private status: ExecutionStatus;
-  private readonly startTime: Date;
-  private endTime: Date | null;
-  private errorMessage: string | null;
+  public readonly id: string = randomUUID();
+  public readonly jobName: string;
+  public status: ExecutionStatus = ExecutionStatus.RUNNING;
+  public readonly startTime: Date = new Date();
+  public endTime: Date | null = null;
+  public errorMessage: string | null = null;
+  public stepExecutions: StepExecution[] = [];
 
   constructor(props: JobExecutionProps) {
-    this.id = props.id ?? randomUUID();
     this.jobName = props.jobName;
-    this.status = props.status ?? 'RUNNING';
-    this.startTime = props.startTime ?? new Date();
-    this.endTime = props.endTime ?? null;
-    this.errorMessage = props.errorMessage ?? null;
   }
 
-  getId(): string {
-    return this.id;
+  addStepExecution(execution: StepExecution): void {
+    this.stepExecutions.push(execution);
   }
 
   complete(): void {
-    this.status = 'COMPLETED';
+    this.status = ExecutionStatus.COMPLETED;
     this.endTime = new Date();
   }
 
   fail(errorMessage: string): void {
-    this.status = 'FAILED';
+    this.status = ExecutionStatus.FAILED;
     this.endTime = new Date();
     this.errorMessage = errorMessage;
   }

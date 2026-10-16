@@ -12,7 +12,7 @@ export class Job {
     private readonly logger: Logger = new Logger(name),
   ) {}
 
-  async execute(): Promise<void> {
+  async execute(): Promise<JobExecution> {
     const jobExecution = new JobExecution({
       jobName: this.name,
     });
@@ -21,9 +21,11 @@ export class Job {
 
     for (const step of this.steps) {
       const stepExecution = new StepExecution({
+        jobExecutionId: jobExecution.id,
         stepName: step.name,
-        jobExecutionId: jobExecution.getId(),
       });
+
+      jobExecution.addStepExecution(stepExecution);
 
       await this.jobRepository.saveStepExecution(stepExecution);
 
@@ -46,7 +48,7 @@ export class Job {
         jobExecution.fail(String(failure));
         await this.jobRepository.saveJobExecution(jobExecution);
 
-        throw failure;
+        return jobExecution;
       }
 
       this.printLog(step.name);
@@ -56,6 +58,8 @@ export class Job {
 
     jobExecution.complete();
     await this.jobRepository.saveJobExecution(jobExecution);
+
+    return jobExecution;
   }
 
   private printLog(stepName: string): void {

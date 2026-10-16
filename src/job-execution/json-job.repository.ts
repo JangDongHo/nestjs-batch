@@ -7,14 +7,14 @@ export class JsonJobRepository implements JobRepository {
   private readonly db = new SimpleJsonDB('./job-execution.json');
 
   async saveJobExecution(execution: JobExecution): Promise<JobExecution> {
-    const key = execution.getId();
+    const key = execution.id;
     this.db.set(`jobExecutions:${key}`, execution);
 
     return execution;
   }
 
   async saveStepExecution(execution: StepExecution): Promise<StepExecution> {
-    const key = execution.getId();
+    const key = execution.id;
     this.db.set(`stepExecutions:${key}`, execution);
 
     return execution;
